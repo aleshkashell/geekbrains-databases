@@ -1,0 +1,83 @@
+SELECT * FROM avg_salary;
+
+SELECT * FROM max_salary;
+
+SELECT * FROM count_employees;
+
+SELECT * FROM dept_manager;
+
+SELECT * FROM dept_emp;
+
+SELECT * FROM employees;
+
+SELECT * FROM departments;
+
+SELECT * FROM salaries;
+
+SELECT * FROM titles;
+
+SELECT * FROM employees WHERE first_name='Georgi' AND last_name='Facello';
+
+-- Получить менеджера отдела
+SELECT first_name, last_name FROM employees
+JOIN titles
+ON employees.emp_no = titles.emp_no
+WHERE titles.title = "Manager";
+
+-- Текущие менеджеры
+SELECT * FROM dept_manager WHERE to_date = '9999-01-01';
+-- Текущие менеджеры с отделом
+SELECT * FROM dept_manager 
+JOIN departments
+ON departments.dept_no = dept_manager.dept_no
+WHERE dept_manager.to_date = '9999-01-01';
+-- Текущие менеджеры с отделом и именами
+SELECT * FROM dept_manager 
+JOIN departments
+ON departments.dept_no = dept_manager.dept_no
+JOIN employees
+ON dept_manager.emp_no = employees.emp_no
+WHERE dept_manager.to_date = '9999-01-01';
+-- Отдел, менеджер
+SELECT departments.dept_name, employees.first_name, employees.last_name FROM dept_manager 
+JOIN departments
+ON departments.dept_no = dept_manager.dept_no
+JOIN employees
+ON dept_manager.emp_no = employees.emp_no
+WHERE dept_manager.to_date = '9999-01-01';
+-- 
+-- Получить отдел сотрудника
+SELECT dept_emp.dept_no FROM dept_emp
+JOIN employees
+ON dept_emp.emp_no = employees.emp_no
+JOIN titles
+ON dept_emp.emp_no = titles.emp_no
+WHERE employees.first_name = 'Georgi' AND employees.last_name='Facello' AND titles.to_date = '9999-01-01';
+-- Менеджер без отдела
+SELECT CONCAT(employees.first_name, ' ', employees.last_name) AS 'Manager' FROM dept_manager 
+JOIN departments
+ON departments.dept_no = dept_manager.dept_no
+JOIN employees
+ON dept_manager.emp_no = employees.emp_no
+WHERE dept_manager.to_date = '9999-01-01' AND departments.dept_no = (
+    SELECT dept_emp.dept_no FROM dept_emp
+    JOIN employees
+    ON dept_emp.emp_no = employees.emp_no
+    JOIN titles
+    ON dept_emp.emp_no = titles.emp_no
+    WHERE employees.first_name = 'Bezalel' AND employees.last_name='Simmel' AND titles.to_date = '9999-01-01'
+);
+DROP FUNCTION `get_manager`;
+
+SELECT `get_manager`('Bezalel', 'Simmel');
+SELECT `get_manager`('Georgi', 'Facello');
+
+SELECT * FROM employees ORDER BY emp_no DESC LIMIT 1;
+@emp_id = 499999;
+
+INSERT INTO employees VALUES(
+    500000, '1963-07-07', 'Vasya', 'Pupkin', 'M', NOW()
+);
+
+
+
