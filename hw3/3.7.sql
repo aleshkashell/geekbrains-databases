@@ -11,4 +11,4 @@ FROM (
     ON dept_emp.emp_no = salaries.emp_no
     GROUP BY dept_name, unique_emp_no
     ) AS t1
-GROUP BY t1.dept_name
+GROUP BY t1.dept_name;

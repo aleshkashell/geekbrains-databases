@@ -2,5 +2,4 @@ SELECT _cities.title_ru AS 'Город', _countries.title_ru AS 'Страна', 
 LEFT JOIN _countries
 ON _countries.country_id = _cities.country_id
 LEFT JOIN _regions
-ON _cities.region_id = _regions.region_id 
-;
+ON _cities.region_id = _regions.region_id;
