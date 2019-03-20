@@ -1,9 +1,9 @@
-SELECT t1.dept_name as 'Имя отдела', COUNT(DISTINCT t1.unique_emp_no) as 'Количество сотрудников', SUM(avg_salary) as 'Общая зарплата'
+SELECT t1.dept_name AS 'Имя отдела', COUNT(DISTINCT t1.unique_emp_no) AS 'Количество сотрудников', SUM(avg_salary) AS 'Общая зарплата'
 FROM (	
     SELECT 
-		departments.dept_name as dept_name, 
-        AVG(salaries.salary) as avg_salary,
-        dept_emp.emp_no as unique_emp_no
+		departments.dept_name AS dept_name, 
+        AVG(salaries.salary) AS avg_salary,
+        dept_emp.emp_no AS unique_emp_no
 	FROM dept_emp
     LEFT JOIN departments
     ON dept_emp.dept_no = departments.dept_no
