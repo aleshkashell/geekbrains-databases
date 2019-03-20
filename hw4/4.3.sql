@@ -1,0 +1,8 @@
+DELIMITER //
+DROP TRIGGER IF EXISTS salary_bonus//
+CREATE TRIGGER salary_bonus AFTER INSERT ON employees
+FOR EACH ROW
+    BEGIN
+        INSERT INTO salaries VALUES(NEW.emp_no, 30000, NOW(), '9999-01-01');
+    END //
+DELIMITER ;
