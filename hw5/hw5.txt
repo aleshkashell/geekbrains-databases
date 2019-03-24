@@ -1,0 +1,71 @@
+-- Задание 1-2
+-- Изменение emp_no в таблицах
+START TRANSACTION;
+    SET @old_emp_no = 11022;
+    SET @new_emp_no = 111023;
+    INSERT INTO employees(emp_no, birth_date, first_name, last_name, gender, hire_date) 
+        SELECT @new_emp_no, birth_date, first_name, last_name, gender, hire_date FROM employees WHERE emp_no = @old_emp_no;
+    UPDATE dept_emp SET emp_no = @new_emp_no WHERE emp_no = @old_emp_no;
+    UPDATE dept_manager SET emp_no = @new_emp_no WHERE emp_no = @old_emp_no;
+    UPDATE salaries SET emp_no = @new_emp_no WHERE emp_no = @old_emp_no;
+    UPDATE titles SET emp_no = @new_emp_no WHERE emp_no = @old_emp_no;
+    DELETE FROM  employees WHERE emp_no = @old_emp_no;
+COMMIT;
+
+-- Перенос части выплаченной заработной платы на другой месяц
+START TRANSACTION;
+    SET @change_sum = 700;
+    UPDATE salaries SET salary = salary + @change_sum WHERE emp_no = 10001 ORDER BY from_date LIMIT 1;
+    UPDATE salaries SET salary = salary - @change_sum WHERE emp_no = 10001 ORDER BY from_date DESC LIMIT 1;
+COMMIT;
+
+
+-- Задание 3
+-- Рассмотрена работа команды EXPLAIN и произведена оптимизация запроса, добавлением индексов.
+mysql> EXPLAIN SELECT * FROM employees WHERE first_name='Georgi' AND last_name='Facello';
++----+-------------+-----------+------------+------+---------------+------+---------+------+--------+----------+-------------+
+| id | select_type | table     | partitions | type | possible_keys | key  | key_len | ref  | rows   | filtered | Extra       |
++----+-------------+-----------+------------+------+---------------+------+---------+------+--------+----------+-------------+
+|  1 | SIMPLE      | employees | NULL       | ALL  | NULL          | NULL | NULL    | NULL | 299379 |     1.00 | Using where |
++----+-------------+-----------+------------+------+---------------+------+---------+------+--------+----------+-------------+
+
+mysql> ALTER TABLE employees ADD INDEX (first_name);
+Query OK, 0 rows affected (1,66 sec)
+Records: 0  Duplicates: 0  Warnings: 0
+
+mysql> EXPLAIN SELECT * FROM employees WHERE first_name='Georgi' AND last_name='Facello';
++----+-------------+-----------+------------+------+---------------+------------+---------+-------+------+----------+-------------+
+| id | select_type | table     | partitions | type | possible_keys | key        | key_len | ref   | rows | filtered | Extra       |
++----+-------------+-----------+------------+------+---------------+------------+---------+-------+------+----------+-------------+
+|  1 | SIMPLE      | employees | NULL       | ref  | first_name    | first_name | 16      | const |  253 |    10.00 | Using where |
++----+-------------+-----------+------------+------+---------------+------------+---------+-------+------+----------+-------------+
+
+mysql> ALTER TABLE employees ADD INDEX (last_name);
+Query OK, 0 rows affected (1,74 sec)
+Records: 0  Duplicates: 0  Warnings: 0
+
+mysql> EXPLAIN SELECT * FROM employees WHERE first_name='Georgi' AND last_name='Facello';
++----+-------------+-----------+------------+-------------+----------------------+----------------------+---------+------+------+----------+----------------------------------------------------+
+| id | select_type | table     | partitions | type        | possible_keys        | key                  | key_len | ref  | rows | filtered | Extra                                              |
++----+-------------+-----------+------------+-------------+----------------------+----------------------+---------+------+------+----------+----------------------------------------------------+
+|  1 | SIMPLE      | employees | NULL       | index_merge | first_name,last_name | last_name,first_name | 18,16   | NULL |    1 |   100.00 | Using intersect(last_name,first_name); Using where |
++----+-------------+-----------+------------+-------------+----------------------+----------------------+---------+------+------+----------+----------------------------------------------------+
+1 row in set, 1 warning (0,00 sec)
+
+
+-- Анализ сложного запроса командой EXPLAIN
+mysql> EXPLAIN SELECT departments.dept_name AS 'Имя отдела', AVG(salaries.salary) AS 'Средняя зарплата' FROM dept_emp
+    -> LEFT JOIN departments
+    -> ON dept_emp.dept_no = departments.dept_no
+    -> LEFT JOIN salaries
+    -> ON dept_emp.emp_no = salaries.emp_no
+    -> GROUP BY dept_emp.dept_no;
++----+-------------+-------------+------------+--------+------------------------+---------+---------+----------------------------+--------+----------+-------------+
+| id | select_type | table       | partitions | type   | possible_keys          | key     | key_len | ref                        | rows   | filtered | Extra       |
++----+-------------+-------------+------------+--------+------------------------+---------+---------+----------------------------+--------+----------+-------------+
+|  1 | SIMPLE      | dept_emp    | NULL       | index  | PRIMARY,emp_no,dept_no | dept_no | 4       | NULL                       | 331570 |   100.00 | Using index |
+|  1 | SIMPLE      | departments | NULL       | eq_ref | PRIMARY                | PRIMARY | 4       | employees.dept_emp.dept_no |      1 |   100.00 | NULL        |
+|  1 | SIMPLE      | salaries    | NULL       | ref    | PRIMARY,emp_no         | PRIMARY | 4       | employees.dept_emp.emp_no  |      9 |   100.00 | NULL        |
++----+-------------+-------------+------------+--------+------------------------+---------+---------+----------------------------+--------+----------+-------------+
+3 rows in set, 1 warning (0,00 sec)
+
